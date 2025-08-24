@@ -96,7 +96,7 @@ struct ItemDownloadSelectionView: View {
                         VStack {
                             DownloadActionButtonWithProgress(
                                 item: item,
-                                mediaSourceId: mediaSource.id
+                                mediaSource: mediaSource
                             )
                         }
                     }

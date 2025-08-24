@@ -144,7 +144,8 @@ struct ItemDownloadListView: View {
     private func handleEpisodeTap(_ episode: DownloadedEpisode) {
         logger.info("User tapped on episode: \(episode.displayTitle)")
         // Navigate to episode player
-        router.route(to: .item(item: episode.episodeItem))
+        let downLoadPlayer = DownloadVideoPlayerManager(episode: episode)
+        router.route(to: .videoPlayer(manager: downLoadPlayer))
     }
 
     private func deleteEpisode(_ episode: DownloadedEpisode) {
@@ -233,6 +234,9 @@ struct DownloadedEpisodeRow: View {
                     .aspectRatio(16 / 9, contentMode: .fill)
                     .frame(width: 120, height: 67.5)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .onTapGesture {
+                        onTap()
+                    }
 
                 // Episode info
                 VStack(alignment: .leading, spacing: 4) {

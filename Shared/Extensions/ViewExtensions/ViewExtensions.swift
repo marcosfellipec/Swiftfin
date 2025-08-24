@@ -169,7 +169,7 @@ extension View {
         _ radius: CGFloat,
         corners: RectangleCorner = .allCorners,
         style: RoundedCornerStyle = .circular,
-        container: Bool = false,
+        container: Bool = false
     ) -> some View {
         // Note: UnevenRoundedRectangle with all equal radii has
         // been found to perform worse than RoundedRectangle

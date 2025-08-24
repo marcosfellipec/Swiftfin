@@ -133,6 +133,7 @@ extension ItemView {
 
                     DownloadActionButtonWithProgress(
                         item: viewModel.item,
+                        mediaSource: viewModel.item.mediaSources?.first,
                         shouldAutoStart: viewModel.item.mediaSources?.count ?? 0 <= 1, // Only auto-start for single source
                         onStartTap: {
                             if let sources = viewModel.item.mediaSources, sources.count > 1 {

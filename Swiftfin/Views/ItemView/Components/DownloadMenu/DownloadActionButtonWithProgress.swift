@@ -23,14 +23,14 @@ struct DownloadActionButtonWithProgress: View {
     /// Creates a download button for a single item
     init(
         item: BaseItemDto,
-        mediaSourceId: String? = nil,
+        mediaSource: MediaSourceInfo? = nil,
         shouldAutoStart: Bool = true,
         onStartTap: (() -> Void)? = nil,
         onErrorTap: (() -> Void)? = nil
     ) {
         self._viewModel = StateObject(wrappedValue: DownloadActionButtonWithProgressViewModel(
             item: item,
-            mediaSourceId: mediaSourceId,
+            mediaSource: mediaSource,
             shouldAutoStart: shouldAutoStart
         ))
         self.shouldAutoStart = shouldAutoStart

@@ -43,7 +43,7 @@ final class DownloadActionButtonWithProgressViewModel: ObservableObject {
 
     // Item and media source information
     private let item: BaseItemDto?
-    private let mediaSourceId: String?
+    private let mediaSource: MediaSourceInfo?
 
     @Injected(\.downloadManager)
     private var downloadManager: DownloadManager
@@ -54,20 +54,20 @@ final class DownloadActionButtonWithProgressViewModel: ObservableObject {
     init(downloadTask: DownloadTask) {
         self.downloadTask = downloadTask
         self.item = downloadTask.item
-        self.mediaSourceId = downloadTask.mediaSourceId
+        self.mediaSource = downloadTask.mediaSource
         self.taskID = downloadTask.taskID
 
         setupStateObservation()
     }
 
     /// Initialize with an item and optional media source for new downloads
-    init(item: BaseItemDto, mediaSourceId: String? = nil, shouldAutoStart: Bool = true) {
+    init(item: BaseItemDto, mediaSource: MediaSourceInfo? = nil, shouldAutoStart: Bool = true) {
         self.item = item
-        self.mediaSourceId = mediaSourceId
+        self.mediaSource = mediaSource
         self.shouldAutoStart = shouldAutoStart
         // Find the specific download task that matches both item and mediaSourceId
         self.downloadTask = downloadManager.downloads.first { task in
-            task.item.id == item.id && task.mediaSourceId == mediaSourceId
+            task.item.id == item.id && task.mediaSource?.id == mediaSource?.id
         }
         self.taskID = downloadTask?.taskID
 
@@ -77,7 +77,7 @@ final class DownloadActionButtonWithProgressViewModel: ObservableObject {
     /// Initialize for testing/preview purposes
     init(state: DownloadTaskState = .ready, progress: Double = 0.0) {
         self.item = nil
-        self.mediaSourceId = nil
+        self.mediaSource = nil
         self.state = state
         self.progress = progress
     }
@@ -94,10 +94,10 @@ final class DownloadActionButtonWithProgressViewModel: ObservableObject {
             .sink { [weak self] downloads in
                 guard let self = self, let itemId = self.item?.id else { return }
 
-                if let specificMediaSourceId = self.mediaSourceId {
+                if let specificMediaSourceId = self.mediaSource?.id {
                     // Specific version mode: Find task matching both item ID and specific media source ID
                     let currentTask = downloads.first { task in
-                        task.item.id == itemId && task.mediaSourceId == specificMediaSourceId
+                        task.item.id == itemId && task.mediaSource?.id == specificMediaSourceId
                     }
 
                     // Only update if task reference actually changed
@@ -313,7 +313,7 @@ final class DownloadActionButtonWithProgressViewModel: ObservableObject {
 
         if self.shouldAutoStart {
             // Specific version mode: Check if this specific version is already downloaded
-            if downloadManager.isItemVersionDownloaded(itemId: itemId, mediaSourceId: self.mediaSourceId) {
+            if downloadManager.isItemVersionDownloaded(itemId: itemId, mediaSourceId: self.mediaSource?.id) {
                 self.state = .completed
                 self.progress = 1.0
             }
@@ -339,7 +339,7 @@ final class DownloadActionButtonWithProgressViewModel: ObservableObject {
             // No active download task - check if item is downloaded locally only if we're not already in completed state
             if self.state != .completed,
                let item = item, let itemId = item.id,
-               downloadManager.isItemVersionDownloaded(itemId: itemId, mediaSourceId: mediaSourceId)
+               downloadManager.isItemVersionDownloaded(itemId: itemId, mediaSourceId: mediaSource?.id)
             {
                 self.state = .completed
                 self.progress = 1.0
@@ -397,14 +397,14 @@ final class DownloadActionButtonWithProgressViewModel: ObservableObject {
         guard let item = item, let itemId = item.id else { return }
 
         // Don't start download if version already downloaded
-        if downloadManager.isItemVersionDownloaded(itemId: itemId, mediaSourceId: mediaSourceId) {
+        if downloadManager.isItemVersionDownloaded(itemId: itemId, mediaSourceId: mediaSource?.id) {
             return
         }
 
         // Always start via DownloadManager.startDownload to honor mediaSourceId
         let taskID = downloadManager.startDownload(
-            itemId: itemId,
-            mediaSourceId: mediaSourceId
+            item: item,
+            mediaSource: mediaSource
         )
         self.taskID = taskID
     }

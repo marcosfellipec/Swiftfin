@@ -111,7 +111,7 @@ final class DownloadManager: NSObject, ObservableObject {
             guard let downloadURL = urlBuilder.mediaURL(
                 itemId: downloadTask.item.id!,
                 quality: downloadTask.quality,
-                mediaSourceId: downloadTask.mediaSourceId,
+                mediaSourceId: downloadTask.mediaSource?.id,
                 container: downloadTask.container,
                 isStatic: downloadTask.isStatic,
                 allowVideoStreamCopy: downloadTask.allowVideoStreamCopy,
@@ -141,9 +141,9 @@ final class DownloadManager: NSObject, ObservableObject {
 
     /// Starts downloading a media file from Jellyfin.
     func startDownload(
-        itemId: String,
+        item: BaseItemDto,
         quality: DownloadQuality = .original,
-        mediaSourceId: String? = nil,
+        mediaSource: MediaSourceInfo? = nil,
         container: String = "mp4",
         isStatic: Bool = true,
         allowVideoStreamCopy: Bool = true,
@@ -151,9 +151,12 @@ final class DownloadManager: NSObject, ObservableObject {
         deviceId: String? = nil,
         deviceProfileId: String? = nil
     ) -> UUID {
+
+        guard let mediaSource else { return UUID() }
+        let itemId = item.id ?? ""
         // Prevent duplicate concurrent downloads for the same item/version
         if let existing = downloads.first(where: { task in
-            guard task.item.id == itemId && task.mediaSourceId == mediaSourceId else { return false }
+            guard task.item.id == itemId && task.mediaSource?.id == mediaSource.id else { return false }
             let currentState = taskStates[task.taskID] ?? .ready
             switch currentState {
             case .ready, .downloading, .paused:
@@ -164,7 +167,7 @@ final class DownloadManager: NSObject, ObservableObject {
         }) {
             logger
                 .info(
-                    "Download already in progress for item: \(itemId), mediaSourceId: \(mediaSourceId ?? "nil"). Returning existing task ID."
+                    "Download already in progress for item: \(itemId), mediaSourceId: \(mediaSource.id ?? "nil"). Returning existing task ID."
                 )
             return existing.taskID
         }
@@ -183,7 +186,25 @@ final class DownloadManager: NSObject, ObservableObject {
                     logger.error("No user session available for download")
                     return
                 }
+                let fullURL: URL?
+                let playSessionID = try await item.videoPlayerViewModel(with: mediaSource).playSessionID
+                if let newURL = mediaSource.transcodingURL {
+                    fullURL = userSession.client.fullURL(with: newURL)
+                } else {
+                    let videoStreamParameters = Paths.GetVideoStreamParameters(
+                        isStatic: true,
+                        tag: item.etag,
+                        playSessionID: playSessionID,
+                        mediaSourceID: item.mediaSources?.first?.id ?? ""
+                    )
 
+                    let videoStreamRequest = Paths.getVideoStream(
+                        itemID: item.id!,
+                        parameters: videoStreamParameters
+                    )
+
+                    fullURL = userSession.client.fullURL(with: videoStreamRequest)
+                }
                 let request = Paths.getItem(itemID: itemId, userID: userSession.user.id)
                 let response = try await userSession.client.send(request)
                 let item = response.value
@@ -192,8 +213,8 @@ final class DownloadManager: NSObject, ObservableObject {
                 let downloadTask = DownloadTask(
                     item: item,
                     taskID: taskID,
-                    mediaSourceId: mediaSourceId,
-                    versionId: mediaSourceId, // Keep for backward compatibility
+                    mediaSource: mediaSource,
+                    versionId: mediaSource.id, // Keep for backward compatibility
                     container: container,
                     quality: quality,
                     isStatic: isStatic,
@@ -204,17 +225,7 @@ final class DownloadManager: NSObject, ObservableObject {
                 )
 
                 // Construct download URL
-                guard let downloadURL = urlBuilder.mediaURL(
-                    itemId: itemId,
-                    quality: quality,
-                    mediaSourceId: mediaSourceId,
-                    container: container,
-                    isStatic: isStatic,
-                    allowVideoStreamCopy: allowVideoStreamCopy,
-                    allowAudioStreamCopy: allowAudioStreamCopy,
-                    deviceId: deviceId,
-                    deviceProfileId: deviceProfileId
-                ) else {
+                guard let downloadURL = fullURL else {
                     logger.error("Failed to construct download URL for item: \(itemId)")
                     return
                 }
@@ -533,7 +544,7 @@ final class DownloadManager: NSObject, ObservableObject {
         guard let downloadURL = urlBuilder.mediaURL(
             itemId: task.item.id!,
             quality: task.quality,
-            mediaSourceId: task.mediaSourceId,
+            mediaSourceId: task.mediaSource?.id,
             container: task.container,
             isStatic: task.isStatic,
             allowVideoStreamCopy: task.allowVideoStreamCopy,
@@ -742,7 +753,7 @@ extension DownloadManager: DownloadSessionDelegate {
         guard let downloadURL = urlBuilder.mediaURL(
             itemId: downloadTask.item.id!,
             quality: downloadTask.quality,
-            mediaSourceId: downloadTask.mediaSourceId,
+            mediaSourceId: downloadTask.mediaSource?.id,
             container: downloadTask.container,
             isStatic: downloadTask.isStatic,
             allowVideoStreamCopy: downloadTask.allowVideoStreamCopy,

@@ -309,13 +309,13 @@ final class DownloadMetadataManager: DownloadMetadataManaging {
         }
 
         // Create version entry for this episode
-        let uniqueVersionId = task.mediaSourceId ?? task.item.id ?? "default"
+        let uniqueVersionId = task.mediaSource?.id ?? task.item.id ?? "default"
         let episodeId = task.item.id
         let versionInfo = VersionInfo(
             versionId: uniqueVersionId,
             container: task.container,
             isStatic: task.isStatic,
-            mediaSourceId: task.mediaSourceId,
+            mediaSourceId: task.mediaSource?.id,
             episodeId: episodeId,
             downloadDate: ISO8601DateFormatter().string(from: Date()),
             taskId: task.taskID.uuidString
@@ -324,7 +324,7 @@ final class DownloadMetadataManager: DownloadMetadataManaging {
         // Remove existing version with same mediaSourceId if it exists
         seasonMetadata.versions.removeAll { version in
             let existingMediaSourceId = version.mediaSourceId
-            let currentMediaSourceId = task.mediaSourceId
+            let currentMediaSourceId = task.mediaSource?.id
 
             // Compare mediaSourceIds, treating nil as equivalent to item.id
             let normalizedExisting = existingMediaSourceId ?? task.item.id
@@ -392,12 +392,12 @@ final class DownloadMetadataManager: DownloadMetadataManaging {
         downloadMetadata.item = task.item
 
         // Create version entry - use mediaSourceId as the unique identifier
-        let uniqueVersionId = task.mediaSourceId ?? task.item.id ?? "default"
+        let uniqueVersionId = task.mediaSource?.id ?? task.item.id ?? "default"
         let versionInfo = VersionInfo(
             versionId: uniqueVersionId,
             container: task.container,
             isStatic: task.isStatic,
-            mediaSourceId: task.mediaSourceId,
+            mediaSourceId: task.mediaSource?.id,
             downloadDate: ISO8601DateFormatter().string(from: Date()),
             taskId: task.taskID.uuidString
         )
@@ -405,7 +405,7 @@ final class DownloadMetadataManager: DownloadMetadataManaging {
         // Remove existing version with same mediaSourceId if it exists
         downloadMetadata.versions.removeAll { version in
             let existingMediaSourceId = version.mediaSourceId
-            let currentMediaSourceId = task.mediaSourceId
+            let currentMediaSourceId = task.mediaSource?.id
 
             // Compare mediaSourceIds, treating nil as equivalent to item.id
             let normalizedExisting = existingMediaSourceId ?? task.item.id

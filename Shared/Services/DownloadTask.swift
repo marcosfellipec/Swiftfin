@@ -38,7 +38,7 @@ struct DownloadTask {
 
     // Enhanced API properties
     let taskID: UUID
-    let mediaSourceId: String?
+    let mediaSource: MediaSourceInfo?
     let versionId: String?
     let container: String
     let isStatic: Bool
@@ -76,7 +76,7 @@ struct DownloadTask {
     init(
         item: BaseItemDto,
         taskID: UUID = UUID(),
-        mediaSourceId: String? = nil,
+        mediaSource: MediaSourceInfo? = nil,
         versionId: String? = nil,
         container: String = "mp4",
         quality: DownloadQuality = .original,
@@ -88,7 +88,7 @@ struct DownloadTask {
     ) {
         self.item = item
         self.taskID = taskID
-        self.mediaSourceId = mediaSourceId
+        self.mediaSource = mediaSource
         self.versionId = versionId
         self.container = container
         self.quality = quality

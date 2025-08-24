@@ -104,9 +104,7 @@ final class VideoPlayerViewModel: ViewModel {
         self.playSessionID = playSessionID
         self.playbackURL = playbackURL
 
-        guard let mediaStreams = mediaSource.mediaStreams else {
-            fatalError("Media source does not have any streams")
-        }
+        let mediaStreams = mediaSource.mediaStreams ?? []
 
         let adjustedStreams = mediaStreams.adjustedTrackIndexes(for: playMethod, selectedAudioStreamIndex: selectedAudioStreamIndex)
 

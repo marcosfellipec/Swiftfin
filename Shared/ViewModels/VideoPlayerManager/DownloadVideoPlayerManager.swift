@@ -12,27 +12,27 @@ import JellyfinAPI
 
 final class DownloadVideoPlayerManager: VideoPlayerManager {
 
-    init(downloadTask: DownloadTask) {
+    init(episode: DownloadedEpisode) {
         super.init()
 
         let downloadManager = Container.shared.downloadManager()
-        guard let playbackURL = downloadManager.getMediaURL(for: downloadTask) else {
-            logger.error("Download task does not have media url for item: \(downloadTask.item.displayTitle)")
+        guard let playbackURL = episode.mediaURL else {
+            logger.error("episode does not have media url for item: \(episode.displayTitle)")
 
             return
         }
 
         self.currentViewModel = .init(
             playbackURL: playbackURL,
-            item: downloadTask.item,
+            item: episode.episodeItem,
             mediaSource: .init(),
             playSessionID: "",
-            videoStreams: downloadTask.item.videoStreams,
-            audioStreams: downloadTask.item.audioStreams,
-            subtitleStreams: downloadTask.item.subtitleStreams,
+            videoStreams: episode.episodeItem.videoStreams,
+            audioStreams: episode.episodeItem.audioStreams,
+            subtitleStreams: episode.episodeItem.subtitleStreams,
             selectedAudioStreamIndex: 1,
             selectedSubtitleStreamIndex: 1,
-            chapters: downloadTask.item.fullChapterInfo,
+            chapters: episode.episodeItem.fullChapterInfo,
             playMethod: .directPlay
         )
     }

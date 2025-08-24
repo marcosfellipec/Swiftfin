@@ -41,7 +41,7 @@ struct Marquee<Content>: View where Content: View {
         delay: Double = 2.0,
         gap: CGFloat = 50.0,
         animateWhenFocused: Bool = false,
-        fade: CGFloat = 10.0,
+        fade: CGFloat = 10.0
     ) where Content == Text {
         self.speed = speed
         self.delay = delay
